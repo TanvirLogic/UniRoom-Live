@@ -10,6 +10,6 @@ class UniRoomLive extends StatefulWidget {
 class _UniRoomLiveState extends State<UniRoomLive> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp();
+    return MaterialApp(debugShowCheckedModeBanner: false);
   }
 }
