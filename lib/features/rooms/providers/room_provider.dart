@@ -33,11 +33,11 @@ class RoomProvider with ChangeNotifier {
     );
   }
 
-  /// Update room status (CR only)
+  /// Update room status
   Future<void> updateRoomStatus({
     required String roomId,
     required String status,
-    required String updatedBy, // pass current user id or name
+    required String updatedBy,
   }) async {
     await _firestore.collection('rooms').doc(roomId).update({
       'status': status,
@@ -46,7 +46,7 @@ class RoomProvider with ChangeNotifier {
     });
   }
 
-  /// Add a new room (CR only)
+  /// Add a new room
   Future<void> addRoom({
     required String roomNumber,
     required String universityId,
@@ -54,7 +54,7 @@ class RoomProvider with ChangeNotifier {
     required String batch,
     required String courseName,
     required String courseTeacher,
-    required String createdBy, // current user id or name
+    required String createdBy,
   }) async {
     await _firestore.collection('rooms').add({
       'roomNumber': roomNumber,
@@ -67,5 +67,29 @@ class RoomProvider with ChangeNotifier {
       'updatedBy': createdBy,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Update room details (for CR edit)
+  Future<void> updateRoomDetails({
+    required String roomId,
+    required String roomNumber,
+    required String batch,
+    required String courseName,
+    required String courseTeacher,
+    required String updatedBy,
+  }) async {
+    await _firestore.collection('rooms').doc(roomId).update({
+      'roomNumber': roomNumber,
+      'batch': batch,
+      'courseName': courseName,
+      'courseTeacher': courseTeacher,
+      'updatedBy': updatedBy,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Delete a room (for CR delete)
+  Future<void> deleteRoom(String roomId) async {
+    await _firestore.collection('rooms').doc(roomId).delete();
   }
 }
