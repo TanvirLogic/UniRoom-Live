@@ -13,4 +13,10 @@ class UniversityProvider with ChangeNotifier {
     _universities = snapshot.docs.map((doc) => University.fromFirestore(doc)).toList();
     notifyListeners();
   }
+  Future<University?> getUniversityById(String id) async {
+    final doc = await _firestore.collection('universities').doc(id).get();
+    if (!doc.exists) return null;
+    return University.fromFirestore(doc);
+  }
 }
+

@@ -7,7 +7,7 @@ import '../providers/auth_provider.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({Key? key}) : super(key: key);
-  static const String name = '/sing-up-gate';
+  static const String name = '/sign-up-gate';
 
   @override
   State<SignUpPage> createState() => _SignUpPageState();
@@ -29,7 +29,7 @@ class _SignUpPageState extends State<SignUpPage> {
     super.initState();
     // Fetch universities when screen loads
     Future.microtask(
-      () => Provider.of<UniversityProvider>(
+          () => Provider.of<UniversityProvider>(
         context,
         listen: false,
       ).fetchUniversities(),
@@ -62,24 +62,46 @@ class _SignUpPageState extends State<SignUpPage> {
                 obscureText: true,
                 onSaved: (val) => _password = val,
               ),
+
+              // University dropdown
               DropdownButtonFormField<University>(
                 decoration: const InputDecoration(labelText: "University"),
                 items: universityProvider.universities
                     .map(
-                      (uni) =>
-                          DropdownMenuItem(value: uni, child: Text(uni.name)),
-                    )
+                      (uni) => DropdownMenuItem(
+                    value: uni,
+                    child: Text(uni.name),
+                  ),
+                )
                     .toList(),
-                onChanged: (val) => setState(() => _selectedUniversity = val),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedUniversity = val;
+                    _department = null; // reset department when university changes
+                  });
+                },
               ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: "Department"),
-                onSaved: (val) => _department = val,
-              ),
+
+              // Department dropdown (dynamic based on university)
+              if (_selectedUniversity != null)
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: "Department"),
+                  items: _selectedUniversity!.departments
+                      .map(
+                        (dept) => DropdownMenuItem(
+                      value: dept,
+                      child: Text(dept),
+                    ),
+                  )
+                      .toList(),
+                  onChanged: (val) => setState(() => _department = val),
+                ),
+
               TextFormField(
                 decoration: const InputDecoration(labelText: "Batch"),
                 onSaved: (val) => _batch = val,
               ),
+
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -106,11 +128,12 @@ class _SignUpPageState extends State<SignUpPage> {
                   "CR accounts require admin approval.",
                   style: TextStyle(color: Colors.red),
                 ),
+
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
                   _formKey.currentState?.save();
-                  if (_selectedUniversity == null) return;
+                  if (_selectedUniversity == null || _department == null) return;
 
                   await authProvider.signUp(
                     name: _name!,
@@ -127,7 +150,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     Navigator.pushNamedAndRemoveUntil(
                       context,
                       StudentDashboardPage.name,
-                      (route) => false,
+                          (route) => false,
                     );
                   }
                 },

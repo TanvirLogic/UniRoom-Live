@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uniroom_live/features/auth/presentation/pages/sign_up_page.dart';
+import 'package:uniroom_live/features/home/presentation/pages/cr_dashboard_page.dart';
+import '../../../home/presentation/pages/student_dashboard_page.dart';
 import '../providers/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
@@ -49,11 +51,23 @@ class _LoginPageState extends State<LoginPage> {
 
                   // Role-based navigation
                   if (user.role == "student") {
-                    Navigator.pushReplacementNamed(context, "/dashboard");
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      StudentDashboardPage.name,
+                      (route) => false,
+                    );
                   } else if (user.role == "cr" && user.isApproved) {
-                    Navigator.pushReplacementNamed(context, "/dashboard");
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      CRDashboardPage.name,
+                      (route) => false,
+                    );
                   } else if (user.role == "cr" && !user.isApproved) {
-                    Navigator.pushReplacementNamed(context, "/waiting");
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      StudentDashboardPage.name,
+                      (route) => false,
+                    );
                   }
                 },
                 child: const Text("Login"),
