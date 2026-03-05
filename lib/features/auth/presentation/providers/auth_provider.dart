@@ -42,8 +42,17 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void listenToAuthChanges() {
-    _authRepository.getCurrentUser().listen((appUser) {
+  Future<void> listenToAuthChanges() async {
+    // 1. We get the stream from the repository
+    final stream = _authRepository.getCurrentUser();
+
+    // 2. We "await" the very first value from the stream (the current user)
+    // This ensures _user is populated before the splash screen finishes
+    _user = await stream.first;
+    notifyListeners();
+
+    // 3. We then continue to listen for future changes (like logging out)
+    stream.listen((appUser) {
       _user = appUser;
       notifyListeners();
     });

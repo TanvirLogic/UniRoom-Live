@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 // Ensure these paths are correct for your project
 import 'package:uniroom_live/features/auth/presentation/pages/login_page.dart';
+import 'package:uniroom_live/features/home/presentation/widgets/firebase_logout_button.dart';
 import '../../../rooms/domain/entities/room_model.dart';
 import '../../../rooms/providers/room_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -46,64 +47,71 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
             ? snapshot.data!.name
             : "UniRoom Live";
 
-        return Scaffold(
-          backgroundColor: const Color(0xFF0D1117),
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: Text(
-              uniName,
-              style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-                onPressed: () => _logout(authProvider),
-              ),
-            ],
-          ),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(user.name),
-              Expanded(
-                child: StreamBuilder<List<Room>>(
-                  stream: roomProvider.roomsStream(
-                    universityId: user.universityId,
-                  ),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError)
-                      return _errorWidget(snapshot.error.toString());
-                    if (!snapshot.hasData)
-                      return const Center(child: CircularProgressIndicator());
-
-                    final rooms = snapshot.data!;
-                    if (rooms.isEmpty) return _emptyWidget();
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      itemCount: rooms.length,
-                      itemBuilder: (context, index) => _buildCRRoomCard(
-                        rooms[index],
-                        roomProvider,
-                        authProvider,
-                      ),
-                    );
-                  },
+        return PopScope(
+          canPop: false,
+          child: Scaffold(
+            backgroundColor: const Color(0xFF0D1117),
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: Text(
+                uniName,
+                style: GoogleFonts.poppins(
+                  fontWeight: .bold,
+                  fontSize: 18,
+                  color: Colors.white70,
                 ),
               ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: const Color(0xFF3F51B5),
-            onPressed: () => _showRoomForm(context, roomProvider, authProvider),
-            icon: const Icon(Icons.add),
-            label: const Text(
-              "ADD ROOM",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              actions: [FireBaseLogoutButton(authProvider: authProvider)],
+            ),
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(user.name),
+                Expanded(
+                  child: StreamBuilder<List<Room>>(
+                    stream: roomProvider.roomsStream(
+                      universityId: user.universityId,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError)
+                        return _errorWidget(snapshot.error.toString());
+                      if (!snapshot.hasData)
+                        return const Center(child: CircularProgressIndicator());
+
+                      final rooms = snapshot.data!;
+                      if (rooms.isEmpty) return _emptyWidget();
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        itemCount: rooms.length,
+                        itemBuilder: (context, index) => _buildCRRoomCard(
+                          rooms[index],
+                          roomProvider,
+                          authProvider,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton.extended(
+              backgroundColor: const Color(0xFF3F51B5),
+              onPressed: () =>
+                  _showRoomForm(context, roomProvider, authProvider),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text(
+                "ADD ROOM",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         );

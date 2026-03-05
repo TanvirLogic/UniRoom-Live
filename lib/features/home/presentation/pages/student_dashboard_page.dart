@@ -6,6 +6,7 @@ import '../../../rooms/domain/entities/room_model.dart';
 import '../../../rooms/providers/room_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../university/provider/university_provider.dart';
+import '../widgets/firebase_logout_button.dart';
 
 class StudentDashboardPage extends StatelessWidget {
   const StudentDashboardPage({Key? key}) : super(key: key);
@@ -18,103 +19,101 @@ class StudentDashboardPage extends StatelessWidget {
     final universityProvider = Provider.of<UniversityProvider>(context);
     final user = authProvider.user;
 
+    // ✅ Handle null user safely
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return FutureBuilder(
-      future: universityProvider.getUniversityById(user!.universityId),
+      future: universityProvider.getUniversityById(user.universityId),
       builder: (context, snapshot) {
         String uniName = snapshot.hasData
             ? snapshot.data!.name
             : "Loading University...";
 
-        return Scaffold(
-          backgroundColor: const Color(0xFF0D1117), // Deep midnight background
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: Text(
-              uniName,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 18,
+        return PopScope(
+          canPop: false,
+          child: Scaffold(
+            backgroundColor: const Color(0xFF0D1117),
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              title: Text(
+                uniName,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                ),
               ),
+              actions: [FireBaseLogoutButton(authProvider: authProvider)],
             ),
-            actions: [
-              IconButton(
-                onPressed: () {
-                  authProvider.logout();
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    LoginPage.name,
-                    (route) => false,
-                  );
-                },
-                icon: const Icon(Icons.logout_rounded, color: Colors.white70),
-              ),
-            ],
-          ),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome & Department Header
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Hello, ${user.name.split(' ')[0]} 👋",
-                      style: GoogleFonts.poppins(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Department of ${user.department}",
-                      style: GoogleFonts.poppins(
-                        color: Colors.white60,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Live Room Stream
-              Expanded(
-                child: StreamBuilder<List<Room>>(
-                  stream: roomProvider.roomsStream(
-                    universityId: user.universityId,
-                    department: user.department,
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Welcome & Department Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
                   ),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError)
-                      return _buildStatusMessage("Something went wrong");
-                    if (!snapshot.hasData)
-                      return const Center(child: CircularProgressIndicator());
-
-                    final rooms = snapshot.data!;
-                    if (rooms.isEmpty)
-                      return _buildStatusMessage(
-                        "No live rooms found for your department.",
-                      );
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: rooms.length,
-                      itemBuilder: (context, index) =>
-                          _buildRoomCard(rooms[index]),
-                    );
-                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Hello, ${user.name.split(' ')[0]} 👋",
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Department of ${user.department}",
+                        style: GoogleFonts.poppins(
+                          color: Colors.white60,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+
+                // Live Room Stream
+                Expanded(
+                  child: StreamBuilder<List<Room>>(
+                    stream: roomProvider.roomsStream(
+                      universityId: user.universityId,
+                      department: user.department,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return _buildStatusMessage("Something went wrong");
+                      }
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final rooms = snapshot.data!;
+                      if (rooms.isEmpty) {
+                        return _buildStatusMessage(
+                          "No live rooms found for your department.",
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: rooms.length,
+                        itemBuilder: (context, index) =>
+                            _buildRoomCard(rooms[index]),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -160,26 +159,29 @@ class StudentDashboardPage extends StatelessWidget {
             ),
             const SizedBox(width: 16),
 
-            // Room Details
+            // Room Details (conditional)
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    room.courseName,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
+                  if (!isAvailable) ...[
+                    Text(
+                      room.courseName,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                  Text(
-                    "Teacher: ${room.courseTeacher}",
-                    style: const TextStyle(color: Colors.white54, fontSize: 13),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Status Badge
+                    Text(
+                      "Teacher: ${room.courseTeacher}",
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -205,22 +207,23 @@ class StudentDashboardPage extends StatelessWidget {
               ),
             ),
 
-            // Batch Info
-            Column(
-              children: [
-                const Text(
-                  "Batch",
-                  style: TextStyle(color: Colors.white38, fontSize: 10),
-                ),
-                Text(
-                  room.batch,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.bold,
+            // Batch Info (only if running class)
+            if (!isAvailable)
+              Column(
+                children: [
+                  const Text(
+                    "Batch",
+                    style: TextStyle(color: Colors.white38, fontSize: 10),
                   ),
-                ),
-              ],
-            ),
+                  Text(
+                    room.batch,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

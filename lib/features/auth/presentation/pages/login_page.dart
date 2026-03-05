@@ -11,7 +11,7 @@ import '../providers/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
-  static const String name = '/auth-gate';
+  static const String name = '/login-gate';
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -38,14 +38,23 @@ class _LoginPageState extends State<LoginPage> {
         String targetRoute = StudentDashboardPage.name;
 
         if (user.role == "cr") {
-          targetRoute = user.isApproved ? CRDashboardPage.name : StudentDashboardPage.name;
+          targetRoute = user.isApproved
+              ? CRDashboardPage.name
+              : StudentDashboardPage.name;
         }
 
-        Navigator.pushNamedAndRemoveUntil(context, targetRoute, (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          targetRoute,
+          (route) => false,
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login Failed: ${e.toString()}"), backgroundColor: Colors.redAccent),
+        SnackBar(
+          content: Text("Login Failed: ${e.toString()}"),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -54,110 +63,149 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Background Aesthetic (University Themed Gradient)
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF1A237E), Color(0xFF121212)],
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        body: Stack(
+          children: [
+            // Background Aesthetic (University Themed Gradient)
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF1A237E), Color(0xFF121212)],
+                ),
               ),
             ),
-          ),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // App Logo/Icon
-                      const Icon(Icons.roofing_rounded, size: 80, color: Colors.white),
-                      const SizedBox(height: 15),
-                      Text(
-                        "UniRoom Live",
-                        style: GoogleFonts.poppins(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // App Logo/Icon
+                        const Icon(
+                          Icons.roofing_rounded,
+                          size: 80,
                           color: Colors.white,
                         ),
-                      ),
-                      Text(
-                        "Find your perfect study space",
-                        style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
-                      ),
-                      const SizedBox(height: 40),
-
-                      // Email Field
-                      _buildTextField(
-                        controller: _emailController,
-                        hint: "University Email",
-                        icon: Icons.email_outlined,
-                        validator: (val) => val!.contains('@') ? null : "Enter valid email",
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Password Field
-                      _buildTextField(
-                        controller: _passController,
-                        hint: "Password",
-                        icon: Icons.lock_outline,
-                        isPassword: true,
-                        obscureText: _obscureText,
-                        onToggle: () => setState(() => _obscureText = !_obscureText),
-                        validator: (val) => val!.length < 6 ? "Too short" : null,
-                      ),
-
-                      const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {},
-                          child: const Text("Forgot Password?", style: TextStyle(color: Colors.white60)),
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-
-                      // Login Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3F51B5),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                            elevation: 5,
+                        const SizedBox(height: 15),
+                        Text(
+                          "UniRoom Live",
+                          style: GoogleFonts.poppins(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
-                          child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : Text("LOGIN", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
                         ),
-                      ),
-
-                      const SizedBox(height: 25),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text("New to UniRoom?", style: TextStyle(color: Colors.white70)),
-                          TextButton(
-                            onPressed: () => Navigator.pushNamed(context, SignUpPage.name),
-                            child: const Text("Sign Up", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        Text(
+                          "Find your perfect study space",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white70,
+                            fontSize: 14,
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 40),
+
+                        // Email Field
+                        _buildTextField(
+                          controller: _emailController,
+                          hint: "University Email",
+                          icon: Icons.email_outlined,
+                          validator: (val) =>
+                              val!.contains('@') ? null : "Enter valid email",
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Password Field
+                        _buildTextField(
+                          controller: _passController,
+                          hint: "Password",
+                          icon: Icons.lock_outline,
+                          isPassword: true,
+                          obscureText: _obscureText,
+                          onToggle: () =>
+                              setState(() => _obscureText = !_obscureText),
+                          validator: (val) =>
+                              val!.length < 6 ? "Too short" : null,
+                        ),
+
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {},
+                            child: const Text(
+                              "Forgot Password?",
+                              style: TextStyle(color: Colors.white60),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+
+                        // Login Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _handleLogin,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3F51B5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              elevation: 5,
+                            ),
+                            child: _isLoading
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : Text(
+                                    "LOGIN",
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 25),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "New to UniRoom?",
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pushReplacementNamed(
+                                context,
+                                SignUpPage.name,
+                              ),
+                              child: const Text(
+                                "Sign Up",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -187,12 +235,18 @@ class _LoginPageState extends State<LoginPage> {
           prefixIcon: Icon(icon, color: Colors.white70),
           suffixIcon: isPassword
               ? IconButton(
-            icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility, color: Colors.white70),
-            onPressed: onToggle,
-          )
+                  icon: Icon(
+                    obscureText ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.white70,
+                  ),
+                  onPressed: onToggle,
+                )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
+          ),
         ),
       ),
     );

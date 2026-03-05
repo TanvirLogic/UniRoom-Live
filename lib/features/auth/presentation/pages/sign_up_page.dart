@@ -84,111 +84,82 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     final uniProvider = Provider.of<UniversityProvider>(context);
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Theme-consistent background
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF1A237E), Color(0xFF0D1117)],
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        body: Stack(
+          children: [
+            // Theme-consistent background
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF1A237E), Color(0xFF0D1117)],
+                ),
               ),
             ),
-          ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Create Account",
-                      style: GoogleFonts.poppins(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Text(
-                      "Join your university community",
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    const SizedBox(height: 30),
-
-                    // Input Fields
-                    _buildInputField(
-                      controller: _nameController,
-                      hint: "Full Name",
-                      icon: Icons.person_outline,
-                    ),
-                    const SizedBox(height: 15),
-                    _buildInputField(
-                      controller: _emailController,
-                      hint: "University Email",
-                      icon: Icons.email_outlined,
-                    ),
-                    const SizedBox(height: 15),
-                    _buildInputField(
-                      controller: _passController,
-                      hint: "Password",
-                      icon: Icons.lock_outline,
-                      isPassword: true,
-                    ),
-                    const SizedBox(height: 15),
-
-                    // University Dropdown
-                    _buildDropdownContainer(
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<University>(
-                          value: _selectedUniversity,
-                          hint: const Text(
-                            "Select University",
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                          dropdownColor: const Color(0xFF1A237E),
-                          icon: const Icon(
-                            Icons.keyboard_arrow_down,
-                            color: Colors.white70,
-                          ),
-                          isExpanded: true,
-                          style: const TextStyle(color: Colors.white),
-                          items: uniProvider.universities
-                              .map(
-                                (uni) => DropdownMenuItem(
-                                  value: uni,
-                                  child: Text(uni.name),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) => setState(() {
-                            _selectedUniversity = val;
-                            _selectedDept = null;
-                          }),
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(
+                          Icons.arrow_back_ios,
+                          color: Colors.white,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 15),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Create Account",
+                        style: GoogleFonts.poppins(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const Text(
+                        "Join your university community",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 30),
 
-                    // Dynamic Department Dropdown
-                    if (_selectedUniversity != null) ...[
+                      // Input Fields
+                      _buildInputField(
+                        controller: _nameController,
+                        hint: "Full Name",
+                        icon: Icons.person_outline,
+                      ),
+                      const SizedBox(height: 15),
+                      _buildInputField(
+                        controller: _emailController,
+                        hint: "University Email",
+                        icon: Icons.email_outlined,
+                      ),
+                      const SizedBox(height: 15),
+                      _buildInputField(
+                        controller: _passController,
+                        hint: "Password",
+                        icon: Icons.lock_outline,
+                        isPassword: true,
+                      ),
+                      const SizedBox(height: 15),
+
+                      // University Dropdown
                       _buildDropdownContainer(
                         child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedDept,
+                          child: DropdownButton<University>(
+                            value: _selectedUniversity,
                             hint: const Text(
-                              "Select Department",
+                              "Select University",
                               style: TextStyle(color: Colors.white54),
                             ),
                             dropdownColor: const Color(0xFF1A237E),
@@ -198,103 +169,138 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                             isExpanded: true,
                             style: const TextStyle(color: Colors.white),
-                            items: _selectedUniversity!.departments
+                            items: uniProvider.universities
                                 .map(
-                                  (dept) => DropdownMenuItem(
-                                    value: dept,
-                                    child: Text(dept),
+                                  (uni) => DropdownMenuItem(
+                                    value: uni,
+                                    child: Text(uni.name),
                                   ),
                                 )
                                 .toList(),
-                            onChanged: (val) =>
-                                setState(() => _selectedDept = val),
+                            onChanged: (val) => setState(() {
+                              _selectedUniversity = val;
+                              _selectedDept = null;
+                            }),
                           ),
                         ),
                       ),
                       const SizedBox(height: 15),
-                    ],
 
-                    _buildInputField(
-                      controller: _batchController,
-                      hint: "Batch (e.g. 2024)",
-                      icon: Icons.school_outlined,
-                    ),
-                    const SizedBox(height: 25),
-
-                    // Role Selection
-                    Text(
-                      "Register as:",
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 15),
-                    Row(
-                      children: [
-                        _roleOption("student", "Student"),
-                        const SizedBox(width: 20),
-                        _roleOption("cr", "Class Rep (CR)"),
-                      ],
-                    ),
-                    if (_role == "cr")
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        margin: const EdgeInsets.only(top: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          "⚠️ CR accounts require manual admin verification.",
-                          style: TextStyle(
-                            color: Colors.orangeAccent,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-
-                    const SizedBox(height: 40),
-
-                    // Submit Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleSignUp,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3F51B5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : Text(
-                                "CREATE ACCOUNT",
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                      // Dynamic Department Dropdown
+                      if (_selectedUniversity != null) ...[
+                        _buildDropdownContainer(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedDept,
+                              hint: const Text(
+                                "Select Department",
+                                style: TextStyle(color: Colors.white54),
                               ),
+                              dropdownColor: const Color(0xFF1A237E),
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.white70,
+                              ),
+                              isExpanded: true,
+                              style: const TextStyle(color: Colors.white),
+                              items: _selectedUniversity!.departments
+                                  .map(
+                                    (dept) => DropdownMenuItem(
+                                      value: dept,
+                                      child: Text(dept),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) =>
+                                  setState(() => _selectedDept = val),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                      ],
+
+                      _buildInputField(
+                        controller: _batchController,
+                        hint: "Batch (e.g. 2024)",
+                        icon: Icons.school_outlined,
                       ),
-                    ),
-                    SizedBox(height: 20),
-                    Center(
-                      child: Text(
-                        'Developed by Md Tanvir Ahmed',
-                        style: TextStyle(color: Colors.white),
+                      const SizedBox(height: 25),
+
+                      // Role Selection
+                      Text(
+                        "Register as:",
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 30),
-                  ],
+                      SizedBox(height: 15),
+                      Row(
+                        children: [
+                          _roleOption("student", "Student"),
+                          const SizedBox(width: 20),
+                          _roleOption("cr", "Class Rep (CR)"),
+                        ],
+                      ),
+                      if (_role == "cr")
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          margin: const EdgeInsets.only(top: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            "⚠️ CR accounts require manual admin verification.",
+                            style: TextStyle(
+                              color: Colors.orangeAccent,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+
+                      const SizedBox(height: 40),
+
+                      // Submit Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _handleSignUp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3F51B5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : Text(
+                                  "CREATE ACCOUNT",
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Center(
+                        child: Text(
+                          'Developed by Md Tanvir Ahmed',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
