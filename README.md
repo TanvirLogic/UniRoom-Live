@@ -1,7 +1,3 @@
-Here’s a **professional, international‑standard README.md** for your UniRoom Live project. It’s structured for engineers, contributors, and users, with clear sections, badges, and the direct APK download link you provided.
-
----
-
 # UniRoom Live 📚🏫
 
 [`https://flutter.dev`](https://flutter.dev)  
@@ -126,8 +122,3 @@ You are free to use, modify, and distribute with attribution.
 - **Md. Tanvir** – Lead Developer & Architect  
 - Open for contributions! Fork the repo, create a branch, and submit a PR.
 
----
-
-👉 With this README, anyone can **download the APK**, understand the architecture, and contribute professionally.  
-
-Would you like me to also add **screenshots and GIFs** of the dashboards (Student & CR) into the README so it looks more polished for GitHub?
