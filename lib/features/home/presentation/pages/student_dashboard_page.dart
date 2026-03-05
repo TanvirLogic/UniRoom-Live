@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:uniroom_live/features/auth/presentation/pages/login_page.dart';
 import '../../../rooms/domain/entities/room_model.dart';
 import '../../../rooms/providers/room_provider.dart';
@@ -15,19 +16,28 @@ class StudentDashboardPage extends StatelessWidget {
     final roomProvider = Provider.of<RoomProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
     final universityProvider = Provider.of<UniversityProvider>(context);
+    final user = authProvider.user;
 
     return FutureBuilder(
-      future: universityProvider.getUniversityById(
-        authProvider.user!.universityId,
-      ),
+      future: universityProvider.getUniversityById(user!.universityId),
       builder: (context, snapshot) {
-        String uniName = "Loading...";
-        if (snapshot.hasData) {
-          uniName = snapshot.data!.name;
-        }
+        String uniName = snapshot.hasData
+            ? snapshot.data!.name
+            : "Loading University...";
 
         return Scaffold(
+          backgroundColor: const Color(0xFF0D1117), // Deep midnight background
           appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Text(
+              uniName,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 18,
+              ),
+            ),
             actions: [
               IconButton(
                 onPressed: () {
@@ -38,79 +48,191 @@ class StudentDashboardPage extends StatelessWidget {
                     (route) => false,
                   );
                 },
-                icon: Icon(Icons.logout),
+                icon: const Icon(Icons.logout_rounded, color: Colors.white70),
               ),
             ],
-            title: Text(uniName),
-            centerTitle: true,
           ),
-          body: StreamBuilder<List<Room>>(
-            stream: roomProvider.roomsStream(
-              universityId: authProvider.user!.universityId,
-              department: authProvider.user!.department,
-            ),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(child: Text("Error: ${snapshot.error}"));
-              }
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final rooms = snapshot.data!;
-              if (rooms.isEmpty) {
-                return const Center(
-                  child: Text(
-                    "No rooms found for your department.",
-                    style: TextStyle(fontSize: 16),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Welcome & Department Header
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Hello, ${user.name.split(' ')[0]} 👋",
+                      style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Department of ${user.department}",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white60,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Live Room Stream
+              Expanded(
+                child: StreamBuilder<List<Room>>(
+                  stream: roomProvider.roomsStream(
+                    universityId: user.universityId,
+                    department: user.department,
                   ),
-                );
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: rooms.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final room = rooms[index];
-                  return Card(
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      title: Text(
-                        "Room ${room.roomNumber}",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          "${room.department} | ${room.batch}\n${room.courseName} - ${room.courseTeacher}",
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ),
-                      trailing: Chip(
-                        label: Text(
-                          room.status == "available"
-                              ? "Available"
-                              : "Running Class",
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        backgroundColor: room.status == "available"
-                            ? Colors.green
-                            : Colors.orange,
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError)
+                      return _buildStatusMessage("Something went wrong");
+                    if (!snapshot.hasData)
+                      return const Center(child: CircularProgressIndicator());
+
+                    final rooms = snapshot.data!;
+                    if (rooms.isEmpty)
+                      return _buildStatusMessage(
+                        "No live rooms found for your department.",
+                      );
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: rooms.length,
+                      itemBuilder: (context, index) =>
+                          _buildRoomCard(rooms[index]),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildRoomCard(Room room) {
+    bool isAvailable = room.status == "available";
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            // Room Number Avatar
+            Container(
+              height: 60,
+              width: 60,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isAvailable
+                      ? [Colors.green.shade400, Colors.green.shade700]
+                      : [Colors.orange.shade400, Colors.orange.shade700],
+                ),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Center(
+                child: Text(
+                  room.roomNumber,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            // Room Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    room.courseName,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    "Teacher: ${room.courseTeacher}",
+                    style: const TextStyle(color: Colors.white54, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Status Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (isAvailable ? Colors.green : Colors.orange)
+                          .withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      isAvailable ? "● Available Now" : "● Running Class",
+                      style: TextStyle(
+                        color: isAvailable
+                            ? Colors.greenAccent
+                            : Colors.orangeAccent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Batch Info
+            Column(
+              children: [
+                const Text(
+                  "Batch",
+                  style: TextStyle(color: Colors.white38, fontSize: 10),
+                ),
+                Text(
+                  room.batch,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusMessage(String msg) {
+    return Center(
+      child: Text(
+        msg,
+        style: const TextStyle(color: Colors.white54, fontSize: 16),
+      ),
     );
   }
 }
