@@ -25,8 +25,28 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
     Navigator.pushNamedAndRemoveUntil(
       context,
       LoginPage.name,
-      (route) => false,
+          (route) => false,
     );
+  }
+
+  // Extracted logic to handle menu selections to avoid duplication
+  Future<void> _handleMenuAction(
+      String val,
+      Room room,
+      RoomProvider rp,
+      AuthProvider auth,
+      ) async {
+    if (val == "edit") {
+      _showRoomForm(context, rp, auth, room: room);
+    } else if (val == "delete") {
+      await rp.deleteRoom(room.id);
+    } else {
+      await rp.updateRoomStatus(
+        roomId: room.id,
+        status: val,
+        updatedBy: auth.user!.name,
+      );
+    }
   }
 
   @override
@@ -36,16 +56,14 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
     final universityProvider = Provider.of<UniversityProvider>(context);
     final user = authProvider.user;
 
-    // Guard against null user during logout transition
-    if (user == null)
+    if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return FutureBuilder(
       future: universityProvider.getUniversityById(user.universityId),
       builder: (context, snapshot) {
-        String uniName = snapshot.hasData
-            ? snapshot.data!.name
-            : "UniRoom Live";
+        String uniName = snapshot.hasData ? snapshot.data!.name : "UniRoom Live";
 
         return PopScope(
           canPop: false,
@@ -58,7 +76,7 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
               title: Text(
                 uniName,
                 style: GoogleFonts.poppins(
-                  fontWeight: .bold,
+                  fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: Colors.white70,
                 ),
@@ -75,10 +93,12 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
                       universityId: user.universityId,
                     ),
                     builder: (context, snapshot) {
-                      if (snapshot.hasError)
+                      if (snapshot.hasError) {
                         return _errorWidget(snapshot.error.toString());
-                      if (!snapshot.hasData)
+                      }
+                      if (!snapshot.hasData) {
                         return const Center(child: CircularProgressIndicator());
+                      }
 
                       final rooms = snapshot.data!;
                       if (rooms.isEmpty) return _emptyWidget();
@@ -121,6 +141,8 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
 
   Widget _buildCRRoomCard(Room room, RoomProvider rp, AuthProvider auth) {
     bool isAvailable = room.status == "available";
+    // GlobalKey to trigger the PopupMenuButton manually
+    final GlobalKey<PopupMenuButtonState<String>> _menuKey = GlobalKey();
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -137,6 +159,10 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
         ),
       ),
       child: ListTile(
+        onTap: () {
+          // Triggers the popup menu when the tile is tapped
+          _menuKey.currentState?.showButtonMenu();
+        },
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         title: Text(
           "Room ${room.roomNumber}",
@@ -146,49 +172,35 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
             fontSize: 20,
           ),
         ),
-
-        // LOGIC: All other status info removed if available
         subtitle: isAvailable
             ? null
             : Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "${room.courseName} | ${room.batch}",
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "Teacher: ${room.courseTeacher}",
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+          padding: const EdgeInsets.only(top: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "${room.courseName} | ${room.batch}",
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                "Teacher: ${room.courseTeacher}",
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 12,
                 ),
               ),
-
+            ],
+          ),
+        ),
         trailing: PopupMenuButton<String>(
+          key: _menuKey,
           color: const Color(0xFF1A237E),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          onSelected: (val) async {
-            if (val == "edit") {
-              _showRoomForm(context, rp, auth, room: room);
-            } else if (val == "delete") {
-              await rp.deleteRoom(room.id);
-            } else {
-              await rp.updateRoomStatus(
-                roomId: room.id,
-                status: val,
-                updatedBy: auth.user!.name,
-              );
-            }
-          },
+          onSelected: (val) => _handleMenuAction(val, room, rp, auth),
           itemBuilder: (context) => [
             _menuItem(
               "available",
@@ -212,8 +224,6 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
     );
   }
 
-  // --- Sub-Widgets ---
-
   Widget _statusBadge(bool isAvailable) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -233,11 +243,11 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
   }
 
   PopupMenuItem<String> _menuItem(
-    String val,
-    String text,
-    IconData icon,
-    Color color,
-  ) {
+      String val,
+      String text,
+      IconData icon,
+      Color color,
+      ) {
     return PopupMenuItem(
       value: val,
       child: Row(
@@ -279,7 +289,8 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
   }
 
   Widget _emptyWidget() => const Center(
-    child: Text("No rooms added yet.", style: TextStyle(color: Colors.white38)),
+    child: Text("No rooms added yet.",
+        style: TextStyle(color: Colors.white38)),
   );
 
   Widget _errorWidget(String error) => Center(
@@ -289,14 +300,12 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
     ),
   );
 
-  // --- Modal Form ---
-
   void _showRoomForm(
-    BuildContext context,
-    RoomProvider rp,
-    AuthProvider auth, {
-    Room? room,
-  }) {
+      BuildContext context,
+      RoomProvider rp,
+      AuthProvider auth, {
+        Room? room,
+      }) {
     final bool isEdit = room != null;
     final rNoC = TextEditingController(text: room?.roomNumber);
     final bChC = TextEditingController(text: room?.batch);

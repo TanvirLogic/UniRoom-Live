@@ -24,7 +24,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final TextEditingController _emailController = TextEditingController();
 
   bool _isLoading = false;
-  bool _obscureText = true;
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
