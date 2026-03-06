@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:uniroom_live/features/auth/presentation/pages/login_page.dart';
 import 'package:uniroom_live/features/home/presentation/pages/student_dashboard_page.dart';
 import '../../../university/domain/entity/university_model.dart';
 import '../../../university/provider/university_provider.dart';
@@ -86,6 +87,9 @@ class _SignUpPageState extends State<SignUpPage> {
 
     return PopScope(
       canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        Navigator.pushReplacementNamed(context, LoginPage.name);
+      },
       child: Scaffold(
         body: Stack(
           children: [

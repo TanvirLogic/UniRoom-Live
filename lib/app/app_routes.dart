@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uniroom_live/features/auth/presentation/pages/forgot_password_page.dart';
 
 import '../features/auth/presentation/pages/auth_gate.dart';
 import '../features/auth/presentation/pages/login_page.dart';
@@ -19,6 +20,8 @@ class AppRoutes {
       widget = StudentDashboardPage();
     } else if (setting.name == SignUpPage.name) {
       widget = SignUpPage();
+    } else if (setting.name == ForgotPasswordPage.name) {
+      widget = ForgotPasswordPage();
     }
 
     return MaterialPageRoute(builder: (context) => widget);

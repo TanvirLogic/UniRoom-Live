@@ -33,7 +33,10 @@ class AuthRepositoryImpl implements AuthRepository {
       'createdAt': FieldValue.serverTimestamp(),
     };
 
-    await _firestore.collection('users').doc(userCredential.user!.uid).set(userDoc);
+    await _firestore
+        .collection('users')
+        .doc(userCredential.user!.uid)
+        .set(userDoc);
 
     return AppUser(
       id: userCredential.user!.uid,
@@ -57,7 +60,10 @@ class AuthRepositoryImpl implements AuthRepository {
       password: password,
     );
 
-    final doc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
+    final doc = await _firestore
+        .collection('users')
+        .doc(userCredential.user!.uid)
+        .get();
     return AppUser.fromFirestore(doc);
   }
 
@@ -73,5 +79,15 @@ class AuthRepositoryImpl implements AuthRepository {
       final doc = await _firestore.collection('users').doc(user.uid).get();
       return AppUser.fromFirestore(doc);
     });
+  }
+
+  @override
+  Future<AppUser?> forgotPassword({required String email}) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return null;
+    } catch (e) {
+      throw e;
+    }
   }
 }

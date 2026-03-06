@@ -36,6 +36,11 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> forgotPass(String email) async {
+    _user = await _authRepository.forgotPassword(email: email);
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     await _authRepository.logout();
     _user = null;

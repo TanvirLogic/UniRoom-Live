@@ -1,8 +1,9 @@
-import 'dart:ui';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart'; // Add to pubspec.yaml
-import 'package:uniroom_live/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:uniroom_live/features/auth/presentation/pages/login_page.dart';
 
 // Import your existing logic paths
 import 'package:uniroom_live/features/auth/presentation/pages/sign_up_page.dart';
@@ -10,18 +11,18 @@ import 'package:uniroom_live/features/home/presentation/pages/cr_dashboard_page.
 import '../../../home/presentation/pages/student_dashboard_page.dart';
 import '../providers/auth_provider.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
-  static const String name = '/login-gate';
+class ForgotPasswordPage extends StatefulWidget {
+  const ForgotPasswordPage({Key? key}) : super(key: key);
+  static const String name = '/forgot-pass-gate';
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passController = TextEditingController();
+
   bool _isLoading = false;
   bool _obscureText = true;
 
@@ -32,28 +33,31 @@ class _LoginPageState extends State<LoginPage> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     try {
-      await authProvider.login(_emailController.text, _passController.text);
+      await authProvider.forgotPass(_emailController.text);
       final user = authProvider.user;
 
-      if (user != null && mounted) {
-        String targetRoute = StudentDashboardPage.name;
-
-        if (user.role == "cr") {
-          targetRoute = user.isApproved
-              ? CRDashboardPage.name
-              : StudentDashboardPage.name;
-        }
+      if (user == null && mounted) {
+        String targetRoute = LoginPage.name;
 
         Navigator.pushNamedAndRemoveUntil(
           context,
           targetRoute,
-          (route) => false,
+              (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Something Wrong: May be this email is not registered yet",
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Login Failed: ${e.toString()}"),
+          content: Text("Something Wrong: ${e.toString()}"),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -104,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         Text(
-                          "Find your perfect study space",
+                          "Change your password",
                           style: GoogleFonts.poppins(
                             color: Colors.white70,
                             fontSize: 14,
@@ -121,37 +125,6 @@ class _LoginPageState extends State<LoginPage> {
                               val!.contains('@') ? null : "Enter valid email",
                         ),
                         const SizedBox(height: 20),
-
-                        // Password Field
-                        _buildTextField(
-                          controller: _passController,
-                          hint: "Password",
-                          icon: Icons.lock_outline,
-                          isPassword: true,
-                          obscureText: _obscureText,
-                          onToggle: () =>
-                              setState(() => _obscureText = !_obscureText),
-                          validator: (val) =>
-                              val!.length < 6 ? "Too short" : null,
-                        ),
-
-                        const SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.pushReplacementNamed(
-                                context,
-                                ForgotPasswordPage.name,
-                              );
-                            },
-                            child: const Text(
-                              "Forgot Password?",
-                              style: TextStyle(color: Colors.white60),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 30),
 
                         // Login Button
                         SizedBox(
@@ -178,6 +151,24 @@ class _LoginPageState extends State<LoginPage> {
                                       color: Colors.white,
                                     ),
                                   ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 25),
+
+                        Text(
+                          "A reset password email will be sent to you email address, please check the email form email box or spam.",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+
+                        Text(
+                          "Click the link for changing the password from that email.",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white70,
+                            fontSize: 14,
                           ),
                         ),
 
