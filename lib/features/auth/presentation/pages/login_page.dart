@@ -140,9 +140,9 @@ class _LoginPageState extends State<LoginPage> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
-                              Navigator.pushReplacementNamed(
+                              Navigator.pushNamedAndRemoveUntil(
                                 context,
-                                ForgotPasswordPage.name,
+                                ForgotPasswordPage.name,(route) => false,
                               );
                             },
                             child: const Text(
@@ -191,7 +191,11 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             TextButton(
                               onPressed: () =>
-                                  Navigator.pushNamed(context, SignUpPage.name),
+                                  Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    SignUpPage.name,
+                                    (route) => false,
+                                  ),
                               child: const Text(
                                 "Sign Up",
                                 style: TextStyle(

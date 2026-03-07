@@ -115,7 +115,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       IconButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          LoginPage.name,
+                          (route) => false,
+                        ),
                         icon: const Icon(
                           Icons.arrow_back_ios,
                           color: Colors.white,

@@ -41,7 +41,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         Navigator.pushNamedAndRemoveUntil(
           context,
           targetRoute,
-              (route) => false,
+          (route) => false,
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -69,6 +69,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          LoginPage.name,
+          (route) => false,
+        );
+      },
       child: Scaffold(
         body: Stack(
           children: [
@@ -181,9 +188,37 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             ),
                             TextButton(
                               onPressed: () =>
-                                  Navigator.pushNamed(context, SignUpPage.name),
+                                  Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    SignUpPage.name,
+                                    (route) => false,
+                                  ),
                               child: const Text(
                                 "Sign Up",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Already have an account?",
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    LoginPage.name,
+                                    (route) => false,
+                                  ),
+                              child: const Text(
+                                "Login",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
