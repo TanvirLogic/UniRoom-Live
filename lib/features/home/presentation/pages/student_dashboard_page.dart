@@ -8,9 +8,16 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../university/provider/university_provider.dart';
 import '../widgets/firebase_logout_button.dart';
 
-class StudentDashboardPage extends StatelessWidget {
+class StudentDashboardPage extends StatefulWidget {
   const StudentDashboardPage({Key? key}) : super(key: key);
   static const String name = '/student-dashboard';
+
+  @override
+  State<StudentDashboardPage> createState() => _StudentDashboardPageState();
+}
+
+class _StudentDashboardPageState extends State<StudentDashboardPage> {
+  String _batchQuery = "";
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +26,6 @@ class StudentDashboardPage extends StatelessWidget {
     final universityProvider = Provider.of<UniversityProvider>(context);
     final user = authProvider.user;
 
-    // ✅ Handle null user safely
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -27,9 +33,8 @@ class StudentDashboardPage extends StatelessWidget {
     return FutureBuilder(
       future: universityProvider.getUniversityById(user.universityId),
       builder: (context, snapshot) {
-        String uniName = snapshot.hasData
-            ? snapshot.data!.name
-            : "Loading University...";
+        String uniName =
+        snapshot.hasData ? snapshot.data!.name : "Loading University...";
 
         return PopScope(
           canPop: false,
@@ -79,6 +84,31 @@ class StudentDashboardPage extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // 🔍 Batch Search Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextField(
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: "Search by batch...",
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.05),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (val) {
+                      setState(() {
+                        _batchQuery = val.trim().toLowerCase();
+                      });
+                    },
+                  ),
+                ),
+
                 const SizedBox(height: 20),
 
                 // Live Room Stream
@@ -96,10 +126,19 @@ class StudentDashboardPage extends StatelessWidget {
                         return const Center(child: CircularProgressIndicator());
                       }
 
-                      final rooms = snapshot.data!;
+                      var rooms = snapshot.data!;
+
+                      // Apply batch filter
+                      if (_batchQuery.isNotEmpty) {
+                        rooms = rooms
+                            .where((room) =>
+                            room.batch.toLowerCase().contains(_batchQuery))
+                            .toList();
+                      }
+
                       if (rooms.isEmpty) {
                         return _buildStatusMessage(
-                          "No live rooms found for your department.",
+                          "No rooms found for your search.",
                         );
                       }
 
@@ -176,17 +215,13 @@ class StudentDashboardPage extends StatelessWidget {
                     Text(
                       "Teacher: ${room.courseTeacher}",
                       style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 13,
-                      ),
+                          color: Colors.white54, fontSize: 13),
                     ),
                     const SizedBox(height: 8),
                   ],
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
+                        horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: (isAvailable ? Colors.green : Colors.orange)
                           .withOpacity(0.1),
