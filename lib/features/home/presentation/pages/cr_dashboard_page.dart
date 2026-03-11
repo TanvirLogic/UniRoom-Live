@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-// Ensure these paths are correct for your project
-import 'package:uniroom_live/features/auth/presentation/pages/login_page.dart';
-import 'package:uniroom_live/features/home/presentation/widgets/firebase_logout_button.dart';
 import '../../../rooms/domain/entities/room_model.dart';
 import '../../../rooms/providers/room_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../university/provider/university_provider.dart';
+import '../widgets/firebase_logout_button.dart';
 
 class CRDashboardPage extends StatefulWidget {
   const CRDashboardPage({Key? key}) : super(key: key);
@@ -19,17 +16,6 @@ class CRDashboardPage extends StatefulWidget {
 }
 
 class _CRDashboardPageState extends State<CRDashboardPage> {
-  // Helper to handle Logout safely
-  void _logout(AuthProvider auth) {
-    auth.logout();
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      LoginPage.name,
-          (route) => false,
-    );
-  }
-
-  // Extracted logic to handle menu selections to avoid duplication
   Future<void> _handleMenuAction(
       String val,
       Room room,
@@ -45,6 +31,7 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
         roomId: room.id,
         status: val,
         updatedBy: auth.user!.name,
+        department: auth.user!.department, // ✅ reassign ownership
       );
     }
   }
@@ -89,8 +76,8 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
                 _buildHeader(user.name),
                 Expanded(
                   child: StreamBuilder<List<Room>>(
-                    stream: roomProvider.roomsStream(
-                      universityId: user.universityId,
+                    stream: roomProvider.allRoomsStream(
+                      universityId: user.universityId, // ✅ CRs see all rooms
                     ),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
@@ -122,8 +109,7 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
             ),
             floatingActionButton: FloatingActionButton.extended(
               backgroundColor: const Color(0xFF3F51B5),
-              onPressed: () =>
-                  _showRoomForm(context, roomProvider, authProvider),
+              onPressed: () => _showRoomForm(context, roomProvider, authProvider),
               icon: const Icon(Icons.add, color: Colors.white),
               label: const Text(
                 "ADD ROOM",
@@ -139,271 +125,139 @@ class _CRDashboardPageState extends State<CRDashboardPage> {
     );
   }
 
-  Widget _buildCRRoomCard(Room room, RoomProvider rp, AuthProvider auth) {
-    bool isAvailable = room.status == "available";
-    // GlobalKey to trigger the PopupMenuButton manually
-    final GlobalKey<PopupMenuButtonState<String>> _menuKey = GlobalKey();
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isAvailable
-            ? Colors.green.withOpacity(0.02)
-            : Colors.white.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isAvailable
-              ? Colors.green.withOpacity(0.3)
-              : Colors.orange.withOpacity(0.3),
+  Widget _buildHeader(String name) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        "Welcome, $name (CR)",
+        style: GoogleFonts.poppins(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
       ),
+    );
+  }
+
+  Widget _buildCRRoomCard(Room room, RoomProvider rp, AuthProvider auth) {
+    bool isAvailable = room.status == "available";
+    bool isOccupied = room.status == "running_class";
+
+    return Card(
+      color: const Color(0xFF161B22),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: ListTile(
-        onTap: () {
-          // Triggers the popup menu when the tile is tapped
-          _menuKey.currentState?.showButtonMenu();
-        },
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         title: Text(
-          "Room ${room.roomNumber}",
-          style: GoogleFonts.poppins(
-            color: isAvailable ? Colors.greenAccent : Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          "${room.roomNumber} (${room.department})", // show dept ownership
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        subtitle: isAvailable
-            ? null
-            : Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "${room.courseName} | ${room.batch}",
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                "Teacher: ${room.courseTeacher}",
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+        subtitle: Text(
+          isAvailable ? "Available" : "Running Class",
+          style: TextStyle(
+            color: isAvailable ? Colors.greenAccent : Colors.orangeAccent,
           ),
         ),
         trailing: PopupMenuButton<String>(
-          key: _menuKey,
-          color: const Color(0xFF1A237E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
           onSelected: (val) => _handleMenuAction(val, room, rp, auth),
           itemBuilder: (context) => [
-            _menuItem(
-              "available",
-              "Make Vacant",
-              Icons.check_circle,
-              Colors.greenAccent,
-            ),
-            _menuItem(
-              "running_class",
-              "Class Running",
-              Icons.timer,
-              Colors.orangeAccent,
-            ),
-            const PopupMenuDivider(),
-            _menuItem("edit", "Edit Details", Icons.edit, Colors.white70),
-            _menuItem("delete", "Remove Room", Icons.delete, Colors.redAccent),
+            const PopupMenuItem(value: "edit", child: Text("Edit")),
+            const PopupMenuItem(value: "delete", child: Text("Delete")),
+            const PopupMenuItem(value: "available", child: Text("Mark Available")),
+            const PopupMenuItem(value: "running_class", child: Text("Mark Running")),
           ],
-          child: _statusBadge(isAvailable),
         ),
       ),
     );
   }
 
-  Widget _statusBadge(bool isAvailable) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: (isAvailable ? Colors.green : Colors.orange).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
+  Widget _errorWidget(String error) {
+    return Center(
       child: Text(
-        isAvailable ? "Available" : "Running Class",
-        style: TextStyle(
-          color: isAvailable ? Colors.greenAccent : Colors.orangeAccent,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
+        "Error: $error",
+        style: const TextStyle(color: Colors.redAccent),
       ),
     );
   }
 
-  PopupMenuItem<String> _menuItem(
-      String val,
-      String text,
-      IconData icon,
-      Color color,
-      ) {
-    return PopupMenuItem(
-      value: val,
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: 10),
-          Text(text, style: TextStyle(color: color, fontSize: 14)),
-        ],
+  Widget _emptyWidget() {
+    return const Center(
+      child: Text(
+        "No rooms found.",
+        style: TextStyle(color: Colors.white54),
       ),
     );
   }
 
-  Widget _buildHeader(String name) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "MANAGEMENT PANEL",
-            style: GoogleFonts.poppins(
-              color: Colors.indigoAccent,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
-          ),
-          Text(
-            "Hello, $name",
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  void _showRoomForm(BuildContext context, RoomProvider rp, AuthProvider auth,
+      {Room? room}) {
+    final roomNumberController = TextEditingController(text: room?.roomNumber ?? '');
+    final batchController = TextEditingController(text: room?.batch ?? '');
+    final courseNameController = TextEditingController(text: room?.courseName ?? '');
+    final courseTeacherController = TextEditingController(text: room?.courseTeacher ?? '');
 
-  Widget _emptyWidget() => const Center(
-    child: Text("No rooms added yet.",
-        style: TextStyle(color: Colors.white38)),
-  );
-
-  Widget _errorWidget(String error) => Center(
-    child: Text(
-      "Error: $error",
-      style: const TextStyle(color: Colors.redAccent),
-    ),
-  );
-
-  void _showRoomForm(
-      BuildContext context,
-      RoomProvider rp,
-      AuthProvider auth, {
-        Room? room,
-      }) {
-    final bool isEdit = room != null;
-    final rNoC = TextEditingController(text: room?.roomNumber);
-    final bChC = TextEditingController(text: room?.batch);
-    final cSeC = TextEditingController(text: room?.courseName);
-    final tChC = TextEditingController(text: room?.courseTeacher);
-
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A237E),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 20,
-          right: 20,
-          top: 20,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF161B22),
+        title: Text(
+          room == null ? "Add Room" : "Edit Room",
+          style: const TextStyle(color: Colors.white),
         ),
-        child: SingleChildScrollView(
+        content: SingleChildScrollView(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                isEdit ? "Edit Room" : "Add New Room",
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              TextField(
+                controller: roomNumberController,
+                decoration: const InputDecoration(labelText: "Room Number"),
               ),
-              const SizedBox(height: 20),
-              _field(rNoC, "Room Number"),
-              _field(bChC, "Batch"),
-              _field(cSeC, "Course Name"),
-              _field(tChC, "Teacher"),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-                onPressed: () async {
-                  if (isEdit) {
-                    await rp.updateRoomDetails(
-                      roomId: room.id,
-                      roomNumber: rNoC.text,
-                      batch: bChC.text,
-                      courseName: cSeC.text,
-                      courseTeacher: tChC.text,
-                      updatedBy: auth.user!.name,
-                    );
-                  } else {
-                    await rp.addRoom(
-                      roomNumber: rNoC.text,
-                      universityId: auth.user!.universityId,
-                      department: auth.user!.department,
-                      batch: bChC.text,
-                      courseName: cSeC.text,
-                      courseTeacher: tChC.text,
-                      createdBy: auth.user!.name,
-                    );
-                  }
-                  if (Navigator.canPop(context)) Navigator.pop(context);
-                },
-                child: const Text(
-                  "CONFIRM",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              TextField(
+                controller: batchController,
+                decoration: const InputDecoration(labelText: "Batch"),
               ),
-              const SizedBox(height: 20),
+              TextField(
+                controller: courseNameController,
+                decoration: const InputDecoration(labelText: "Course Name"),
+              ),
+              TextField(
+                controller: courseTeacherController,
+                decoration: const InputDecoration(labelText: "Course Teacher"),
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _field(TextEditingController controller, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextField(
-        controller: controller,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.white54),
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.05),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
           ),
-        ),
+          ElevatedButton(
+            onPressed: () async {
+              if (room == null) {
+                await rp.addRoom(
+                  roomNumber: roomNumberController.text,
+                  universityId: auth.user!.universityId,
+                  department: auth.user!.department,
+                  batch: batchController.text,
+                  courseName: courseNameController.text,
+                  courseTeacher: courseTeacherController.text,
+                  createdBy: auth.user!.name,
+                );
+              } else {
+                await rp.updateRoomDetails(
+                  roomId: room.id,
+                  roomNumber: roomNumberController.text,
+                  batch: batchController.text,
+                  courseName: courseNameController.text,
+                  courseTeacher: courseTeacherController.text,
+                  updatedBy: auth.user!.name,
+                  department: auth.user!.department, // ✅ reassign ownership
+                );
+              }
+              Navigator.pop(context);
+            },
+            child: const Text("Save"),
+          ),
+        ],
       ),
     );
   }

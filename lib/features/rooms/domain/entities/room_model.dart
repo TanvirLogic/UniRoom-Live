@@ -4,7 +4,7 @@ class Room {
   final String id;
   final String roomNumber;
   final String universityId;
-  final String department;
+  final String department; // ✅ single department owner
   final String batch;
   final String courseName;
   final String courseTeacher;
@@ -41,4 +41,17 @@ class Room {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'roomNumber': roomNumber,
+      'universityId': universityId,
+      'department': department,
+      'batch': batch,
+      'courseName': courseName,
+      'courseTeacher': courseTeacher,
+      'status': status,
+      'updatedBy': updatedBy,
+      'updatedAt': updatedAt,
+    };
+  }
 }

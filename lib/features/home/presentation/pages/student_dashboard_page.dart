@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:uniroom_live/features/auth/presentation/pages/login_page.dart';
 import '../../../rooms/domain/entities/room_model.dart';
 import '../../../rooms/providers/room_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -56,12 +55,8 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
             body: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Welcome & Department Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -111,12 +106,11 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
 
                 const SizedBox(height: 20),
 
-                // Live Room Stream
                 Expanded(
                   child: StreamBuilder<List<Room>>(
                     stream: roomProvider.roomsStream(
                       universityId: user.universityId,
-                      department: user.department,
+                      department: user.department, // ✅ only own dept rooms
                     ),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
@@ -128,7 +122,6 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
 
                       var rooms = snapshot.data!;
 
-                      // Apply batch filter
                       if (_batchQuery.isNotEmpty) {
                         rooms = rooms
                             .where((room) =>
@@ -137,9 +130,7 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
                       }
 
                       if (rooms.isEmpty) {
-                        return _buildStatusMessage(
-                          "No rooms found for your search.",
-                        );
+                        return _buildStatusMessage("No rooms found for your search.");
                       }
 
                       return ListView.builder(
@@ -161,6 +152,7 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
 
   Widget _buildRoomCard(Room room) {
     bool isAvailable = room.status == "available";
+    bool isOccupied = room.status == "running_class";
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -173,7 +165,6 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
-            // Room Number Avatar
             Container(
               height: 60,
               width: 60,
@@ -197,13 +188,11 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
               ),
             ),
             const SizedBox(width: 16),
-
-            // Room Details (conditional)
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (!isAvailable) ...[
+                  if (isOccupied) ...[
                     Text(
                       room.courseName,
                       style: GoogleFonts.poppins(
@@ -214,14 +203,12 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
                     ),
                     Text(
                       "Teacher: ${room.courseTeacher}",
-                      style: const TextStyle(
-                          color: Colors.white54, fontSize: 13),
+                      style: const TextStyle(color: Colors.white54, fontSize: 13),
                     ),
                     const SizedBox(height: 8),
                   ],
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: (isAvailable ? Colors.green : Colors.orange)
                           .withOpacity(0.1),
@@ -241,9 +228,7 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
                 ],
               ),
             ),
-
-            // Batch Info (only if running class)
-            if (!isAvailable)
+            if (isOccupied)
               Column(
                 children: [
                   const Text(

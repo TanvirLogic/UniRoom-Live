@@ -5,32 +5,30 @@ import '../domain/entities/room_model.dart';
 class RoomProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Stream rooms with optional filters
+  /// Stream rooms filtered by university and department
   Stream<List<Room>> roomsStream({
-    String? universityId,
-    String? department,
-    String? batch,
-    String? courseName,
+    required String universityId,
+    required String department,
   }) {
-    Query query = _firestore.collection('rooms');
+    return _firestore
+        .collection('rooms')
+        .where('universityId', isEqualTo: universityId)
+        .where('department', isEqualTo: department)
+        .snapshots()
+        .map((snapshot) =>
+        snapshot.docs.map((doc) => Room.fromFirestore(doc)).toList());
+  }
 
-    if (universityId != null && universityId.isNotEmpty) {
-      query = query.where('universityId', isEqualTo: universityId);
-    }
-    if (department != null && department.isNotEmpty) {
-      query = query.where('department', isEqualTo: department);
-    }
-    if (batch != null && batch.isNotEmpty) {
-      query = query.where('batch', isEqualTo: batch);
-    }
-    if (courseName != null && courseName.isNotEmpty) {
-      query = query.where('courseName', isEqualTo: courseName);
-    }
-
-    return query.snapshots().map(
-          (snapshot) =>
-          snapshot.docs.map((doc) => Room.fromFirestore(doc)).toList(),
-    );
+  /// Stream all rooms (for CRs)
+  Stream<List<Room>> allRoomsStream({
+    required String universityId,
+  }) {
+    return _firestore
+        .collection('rooms')
+        .where('universityId', isEqualTo: universityId)
+        .snapshots()
+        .map((snapshot) =>
+        snapshot.docs.map((doc) => Room.fromFirestore(doc)).toList());
   }
 
   /// Update room status
@@ -38,9 +36,11 @@ class RoomProvider with ChangeNotifier {
     required String roomId,
     required String status,
     required String updatedBy,
+    required String department, // ✅ CR can reassign department
   }) async {
     await _firestore.collection('rooms').doc(roomId).update({
       'status': status,
+      'department': department, // reassign ownership
       'updatedBy': updatedBy,
       'updatedAt': FieldValue.serverTimestamp(),
     });
@@ -69,7 +69,7 @@ class RoomProvider with ChangeNotifier {
     });
   }
 
-  /// Update room details (for CR edit)
+  /// Update room details (CR edit → can change department)
   Future<void> updateRoomDetails({
     required String roomId,
     required String roomNumber,
@@ -77,18 +77,20 @@ class RoomProvider with ChangeNotifier {
     required String courseName,
     required String courseTeacher,
     required String updatedBy,
+    required String department,
   }) async {
     await _firestore.collection('rooms').doc(roomId).update({
       'roomNumber': roomNumber,
       'batch': batch,
       'courseName': courseName,
       'courseTeacher': courseTeacher,
+      'department': department, // ✅ reassign department
       'updatedBy': updatedBy,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
-  /// Delete a room (for CR delete)
+  /// Delete a room
   Future<void> deleteRoom(String roomId) async {
     await _firestore.collection('rooms').doc(roomId).delete();
   }
