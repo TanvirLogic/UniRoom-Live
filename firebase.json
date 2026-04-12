@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"uniroom-1376f","appId":"1:383146690697:android:82ad041a2045ffd5a51e58","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"uniroom-1376f","configurations":{"android":"1:383146690697:android:82ad041a2045ffd5a51e58","ios":"1:383146690697:ios:3e58d9fc5062723ba51e58","macos":"1:383146690697:ios:3e58d9fc5062723ba51e58","web":"1:383146690697:web:e45c8d583c7a613ca51e58","windows":"1:383146690697:web:6ca027539f55c053a51e58"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "uniroom-1376f",
+          "appId": "1:383146690697:android:82ad041a2045ffd5a51e58",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "uniroom-1376f",
+          "configurations": {
+            "android": "1:383146690697:android:82ad041a2045ffd5a51e58",
+            "ios": "1:383146690697:ios:3e58d9fc5062723ba51e58",
+            "macos": "1:383146690697:ios:3e58d9fc5062723ba51e58",
+            "web": "1:383146690697:web:e45c8d583c7a613ca51e58",
+            "windows": "1:383146690697:web:6ca027539f55c053a51e58"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
